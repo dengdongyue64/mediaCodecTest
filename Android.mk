@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
 	avplayer.cpp \
+	encode.cpp \
 	main.cpp
 
 LOCAL_CLANG := true

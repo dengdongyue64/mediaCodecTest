@@ -5,8 +5,8 @@
 
 #include "avplayer.h"
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 720
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 480
 
 int AVPlayer::InitVideo()
 {
@@ -170,7 +170,7 @@ void AVPlayer::RenderFrames()
 				mBeginTime = clock();
 			} else {
 				float fps = mVideoFrameCount / (float(clock() - mBeginTime) / CLOCKS_PER_SEC);
-				printf("### %f\n", fps);
+				//printf("### %f\n", fps);
 			}
 		}
 	} while(err == OK
