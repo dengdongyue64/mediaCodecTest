@@ -5,8 +5,8 @@
 
 #include "avplayer.h"
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 
 int AVPlayer::InitVideo()
 {
@@ -56,11 +56,11 @@ int AVPlayer::InitVideo()
     format->setInt32("height", mHeight);
 
 	
-	sp<NativeWindowWrapper> window = new NativeWindowWrapper(mSurface);
+//	sp<NativeWindowWrapper> window = new NativeWindowWrapper(mSurface);
 	
     mCodec->configure(
                 format,
-                window->getSurfaceTextureClient(),
+                mSurface,
                 NULL,
                 0);
 				
@@ -170,7 +170,7 @@ void AVPlayer::RenderFrames()
 				mBeginTime = clock();
 			} else {
 				float fps = mVideoFrameCount / (float(clock() - mBeginTime) / CLOCKS_PER_SEC);
-				//printf("### %f\n", fps);
+				printf("### %f\n", fps);
 			}
 		}
 	} while(err == OK
@@ -217,14 +217,14 @@ int AVPlayer::InitAudio(int sample_rate, int channel)
 {
 	size_t frameCount = 0;
 	
-	AudioTrack::getMinFrameCount(&frameCount, AUDIO_STREAM_MUSIC, 48000);
+	AudioTrack::getMinFrameCount(&frameCount, AUDIO_STREAM_MUSIC, sample_rate);
 	
     if (mAudioTrack) {
         mAudioTrack = NULL;
     }
 
-    mAudioTrack = new AudioTrack(AUDIO_STREAM_MUSIC, 48000, 
-                      AUDIO_FORMAT_PCM_16_BIT, audio_channel_out_mask_from_count(2), 
+    mAudioTrack = new AudioTrack(AUDIO_STREAM_MUSIC, sample_rate, 
+                      AUDIO_FORMAT_PCM_16_BIT, audio_channel_out_mask_from_count(channel), 
                       frameCount, AUDIO_OUTPUT_FLAG_NONE);
 
     if (mAudioTrack->initCheck() != OK) {

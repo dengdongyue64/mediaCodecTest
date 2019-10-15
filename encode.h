@@ -20,7 +20,7 @@
 #include <gui/SurfaceComposerClient.h>
 #include <gui/Surface.h>
 #include <ui/DisplayInfo.h>
-#include <media/stagefright/NativeWindowWrapper.h>
+//#include <media/stagefright/NativeWindowWrapper.h>
 
 
 #include <time.h>

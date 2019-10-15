@@ -5,8 +5,8 @@
 
 #include "encode.h"
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 720
 
 int Encode::InitEnVideo()
 {
@@ -33,7 +33,7 @@ int Encode::InitEnVideo()
     format->setInt32("width", mWidth);
     format->setInt32("height", mHeight);
 	format->setInt32("bitrate", 600000);
-	format->setInt32("frame-rate", 15);
+	format->setInt32("frame-rate", 30);
 	format->setInt32("color-format", 19);
 	format->setInt32("i-frame-interval", 30);
 
@@ -58,7 +58,7 @@ int Encode::InitEnVideo()
     
     err = mCodec->getOutputBuffers(&mBuffers[1]);
     CHECK_EQ(err, (status_t)OK);	
-	
+    printf("init   encode ok \n");	
     return 0;
 }
 /*

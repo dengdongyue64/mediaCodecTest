@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "avplayer.h"
 #include "encode.h"
+#include <sys/time.h>
 class VideoBuffer
 {
 public:
@@ -68,11 +69,11 @@ enum {
     DEQUEUE_INFO_OUTPUT_FORMAT_CHANGED      = -2,
     DEQUEUE_INFO_OUTPUT_BUFFERS_CHANGED     = -3,
 };
-#define MAX_BUFFER_SIZE (1024 * 1024)
-#define BULK_SIZE 352 * 288 * 3 / 2 //32768
+#define MAX_BUFFER_SIZE (1280 * 1280) 
+#define BULK_SIZE 640 * 480 * 3 / 2 //1382400
 void * avplayerPreocess(void * argc)
 {
-	FILE* video_fp = fopen("/sdcard/app_camera_enc3.h264", "rb");
+	FILE* video_fp = fopen("/sdcard/app_camera720p.h264", "rb");
 	unsigned char *data_buffer =(unsigned char *) malloc(MAX_BUFFER_SIZE);
 	unsigned char *y;
 	AVPlayer * avplayer = (AVPlayer *)argc;
@@ -101,13 +102,14 @@ void * avplayerPreocess(void * argc)
 	return NULL;
 }
 
-#define PICTURE_SIZE 640*480*3/2  //(460800) 
+#define PICTURE_SIZE 1280*720*3/2  //(460800) 
 
 void * encodePreocess(void * argc)
 {
 	Encode * encode = (Encode *)argc;
 	int len=0;
-	int i =0;
+	//int i =0;
+	struct timeval tv;
 	size_t inputIndex =0;
 	size_t outputIndex = 0;
 	static long timeus = 0;
@@ -115,16 +117,19 @@ void * encodePreocess(void * argc)
 	size_t size, offset;
     int64_t timeUs =0;
     uint32_t flags;
-	FILE* yuv_fp = fopen("/mnt/external_sd/app_camera.yuv", "rb");
+	FILE* yuv_fp = fopen("/sdcard/app_camera720p.yuv", "rb");
 	//FILE* yuv_fp = fopen("/mnt/external_sd/bbb_352x288_420p_30fps_32frames.yuv", "rb");
-	
+	printf("start encode \n");	
 	unsigned char * data=(unsigned char *) malloc(PICTURE_SIZE+4);
 	unsigned char * outdata = NULL;
+(void) outdata;
 	while(true){
 		len = fread(data, 1, PICTURE_SIZE, yuv_fp);
 	    printf("******len = %d \n",len);
+		gettimeofday(&tv,NULL);
+		printf("input second:%ld ,millisecond :%ld \n",tv.tv_sec,tv.tv_usec/1000);
 		err = encode->mCodec->dequeueInputBuffer(&inputIndex, -1ll);
-		printf("uuuuuu err= %d \n",err);
+		printf("dequeueInputBuffer err= %d \n",err);
 		printf("****input Index = %d \n",inputIndex);
 
 		const sp<ABuffer> &in = encode->mBuffers[0].itemAt(inputIndex);
@@ -135,14 +140,16 @@ void * encodePreocess(void * argc)
 		timeus++;
 
 		err = encode->mCodec->queueInputBuffer(inputIndex,0,len,timeus,0);
-        printf("aaaaaaaaaa err= %d \n",err);
+        printf("queueInputBuffer err= %d \n",err);
 		
 			while(true){
 		        err = encode->mCodec->dequeueOutputBuffer(&outputIndex, &offset, &size, &timeUs, &flags, 200 * 1000);
-				printf("vvvvvvvvvv  err= %d \n",err);
+				printf("dequeueOutputBuffer err= %d \n",err);
 				printf("****out Index = %d \n",outputIndex);
+				gettimeofday(&tv,NULL);
+               			 printf("getoutdata second:%ld ,millisecond :%ld \n",tv.tv_sec,tv.tv_usec/1000);
 				while(err == OK){
-					const sp<ABuffer> &out =encode->mBuffers[1].itemAt(outputIndex); 
+				/*	const sp<ABuffer> &out =encode->mBuffers[1].itemAt(outputIndex); 
 					printf("****hhhhhhhhhhhhhhhhhhhhhhhhsize = %d  \n",size);
 					outdata= (unsigned char *)malloc(size);
 
@@ -152,11 +159,11 @@ void * encodePreocess(void * argc)
 							printf("\n");
 						printf(" %02x ",outdata[i]);
 
-					}
+					}*/
 					printf("\n");
 					encode->mCodec->releaseOutputBuffer(outputIndex);
 		            err = encode->mCodec->dequeueOutputBuffer(&outputIndex, &offset, &size, &timeUs, &flags, timeUs);
-					free(outdata);
+					//free(outdata);
 				}
 				break;
 			}
@@ -167,38 +174,38 @@ void * encodePreocess(void * argc)
 }
 int main()
 {
-	AVPlayer avplayer;
-	avplayer.InitVideo();
-	pthread_t pid_t;
+//	AVPlayer avplayer;
+//	avplayer.InitVideo();
+//	pthread_t pid_t;
 	size_t stack_size = 0;
-	//pthread_attr_t attr;
-	//int ret = pthread_attr_init(&attr);
-	//ret = pthread_attr_getstacksize(&attr,&stack_size);
-	//printf("stack_size = %dB,%dk  \n",stack_size,stack_size/1024);
-
-    pthread_create(&pid_t, NULL, avplayerPreocess, &avplayer);
-
-//	Encode encode ;
-//	encode.InitEnVideo();
-  //  pthread_t enpid_t;
-//	if(pthread_create(&enpid_t, NULL, encodePreocess, &encode)==-1)
-//	{	
-//		printf("create encodePreocess failed \n  ");
-//		return -2;
-//	}
+	pthread_attr_t attr;
+	int ret = pthread_attr_init(&attr);
+	ret = pthread_attr_getstacksize(&attr,&stack_size);
+	printf("stack_size = %dB,%dk  \n",stack_size,stack_size/1024);
 	
-	if (pthread_join(pid_t, NULL))                  
+      //  pthread_create(&pid_t, NULL, avplayerPreocess, &avplayer);
+
+	Encode encode ;
+	encode.InitEnVideo();
+        pthread_t enpid_t;
+	if(pthread_create(&enpid_t, NULL, encodePreocess, &encode)==-1)
+	{	
+		printf("create encodePreocess failed \n  ");
+		return -2;
+	}
+	
+/*	if (pthread_join(pid_t, NULL))                  
     {
         printf("thread is not exit...\n");
         return -2;
     }
- 	avplayer.Dispose();
+ 	avplayer.Dispose(); */
 
-//	if (pthread_join(enpid_t, NULL))                  
-  //  {
-    //    printf("thread is not exit...\n");
-      //  return -2;
-   // }
-//	encode.Dispose();
+	if (pthread_join(enpid_t, NULL))                  
+  	  {
+            printf("thread is not exit...\n");
+            return -2;
+          }
+	encode.Dispose();
 	return 0;	
 }
